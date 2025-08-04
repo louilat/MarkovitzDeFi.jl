@@ -98,11 +98,31 @@ using Test
         @test Obj2 ≈ 1.1637 atol=0.001
     end
 
-    # projection1 = MarkovitzDeFi.orthogonal_projection([-.5, .5])
-    # projection2 = MarkovitzDeFi.orthogonal_projection([.7, .7, -1.4])
 
-    # @testset "Orthogonal projection on line" begin
-    #     @test projection1 ≈ [-.5, .5] atol = 0.001
-    #     @test projection2 ≈ [.7, .7, -1.4] atol = 0.001
-    # end
+    grad1 = MarkovitzDeFi.compute_gradient(x -> sum(x.^2), [1, 3])
+    grad2 = MarkovitzDeFi.compute_gradient(x -> exp(x[1]) + 2 * x[2] * x[3], [1, 2, 3])
+    grad3 = MarkovitzDeFi.compute_gradient(x -> x[1]^2 * x[2], [2, 4, 1])
+    @testset "Gradient computation" begin
+        @test grad1 ≈ [2, 6] atol = 0.001
+        @test grad2 ≈ [exp(1), 6, 4] atol = 0.001
+        @test grad3 ≈ [16, 4, 0] atol = 0.001
+    end
+
+    projection1 = MarkovitzDeFi.orthogonal_projection([-.5, .5])
+    projection2 = MarkovitzDeFi.orthogonal_projection([.7, .7, -1.4])
+    @testset "Orthogonal projection on line" begin
+        @test projection1 ≈ [-.5, .5] atol = 0.001
+        @test projection2 ≈ [.7, .7, -1.4] atol = 0.001
+    end
+
+    params = MarkovitzDeFi.modelParams(T, C, μ, σ, r, lt, lb)
+    objective_func = MarkovitzDeFi.wrap_objective(params, 1)
+    sol1 = MarkovitzDeFi.adam_optimize(objective_func, 1500, [1, 0, 0], 5e-3, [.9, .999], 0, 1e-8; project = true)
+    sol2 = MarkovitzDeFi.adam_optimize(objective_func, 1500, [0, 1, 0], 5e-3, [.9, .999], 0, 1e-8; project = true)
+    sol3 = MarkovitzDeFi.adam_optimize(objective_func, 1500, [0, 0, 1], 5e-3, [.9, .999], 0, 1e-8; project = true)
+    @testset "Adam Optimizer" begin
+        @test sol1 ≈ [1.1466, 0.8696, -1.0162] atol = 0.001
+        @test sol2 ≈ [1.1466, 0.8696, -1.0162] atol = 0.001
+        @test sol3 ≈ [1.1466, 0.8696, -1.0162] atol = 0.001
+    end
 end
